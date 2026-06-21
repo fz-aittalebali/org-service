@@ -1,0 +1,77 @@
+spring:
+  application:
+    name: org-service-test
+
+  cloud:
+    config:
+      enabled: false
+      import-check:
+        enabled: false
+  config:
+    import: "optional:configserver:"
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/test
+    username: test
+    password: test
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: true
+    open-in-view: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+
+  kafka:
+    bootstrap-servers: localhost:9092
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:8080/realms/test
+
+eureka:
+  client:
+    enabled: false
+    register-with-eureka: false
+    fetch-registry: false
+
+kafka:
+  topics:
+    country-created: org.country.created
+    country-updated: org.country.updated
+    country-deleted: org.country.deleted
+    city-created: org.city.created
+    city-updated: org.city.updated
+    city-deleted: org.city.deleted
+    company-created: org.company.created
+    company-updated: org.company.updated
+    company-deleted: org.company.deleted
+    campus-created: org.campus.created
+    campus-updated: org.campus.updated
+    campus-deleted: org.campus.deleted
+    department-created: org.department.created
+    department-updated: org.department.updated
+    department-deleted: org.department.deleted
+    team-created: org.team.created
+    team-updated: org.team.updated
+    team-deleted: org.team.deleted
+
+outbox:
+  batch-size: 50
+  polling-interval-ms: 5000
+
+logging:
+  level:
+    root: WARN
+    org.dxc.orgservice: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.flywaydb: INFO
