@@ -92,3 +92,10 @@ springdoc:
     path: /api-docs
   swagger-ui:
     path: /swagger-ui.html
+    tags-sorter: alpha
+    operations-sorter: alpha
+    oauth:
+      client-id: swagger-ui
+      use-pkce-with-authorization-code-grant: true
+    oauth2-redirect-url: http://localhost:8083/swagger-ui/oauth2-redirect.html
+  show-actuator: false
