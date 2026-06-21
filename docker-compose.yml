@@ -1,0 +1,175 @@
+# ============================================================
+#  org-service — local dev infrastructure
+#  Services: PostgreSQL · Zookeeper · Kafka · Keycloak
+#            + UI tools: Adminer · Kafka UI
+# ============================================================
+#  Usage:
+#    docker compose up -d          # start everything
+#    docker compose down -v        # stop + remove volumes
+#
+#  Ports are intentionally DIFFERENT from user-service to allow
+#  both stacks to run simultaneously on the same machine:
+#
+#    PostgreSQL  → localhost:5433
+#    Zookeeper   → localhost:2182
+#    Kafka       → localhost:9093
+#    Keycloak    → http://localhost:8081
+#    Adminer     → http://localhost:8889
+#    Kafka UI    → http://localhost:8091
+#
+#  The Spring Boot app itself runs outside Docker (IDE / Maven).
+#  Use the profile:  mvnw spring-boot:run -Dspring-boot.run.profiles=local
+#
+#  Prerequisites:
+#    1. Copy .env.example → .env and adjust secrets if needed.
+#    2. Copy the Keycloak realm file:
+#         cp ../user-service/docker/keycloak/alter-x-realm.json docker/keycloak/
+# ============================================================
+
+services:
+
+  # ──────────────────────────────────────────────────────────
+  # PostgreSQL  (two databases: org_db + keycloak)
+  # ──────────────────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: org-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB:       ${POSTGRES_DB:-org_db}
+      POSTGRES_USER:     ${POSTGRES_USER:-org_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-org_pass}
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/postgres/init-keycloak-db.sql:/docker-entrypoint-initdb.d/init-keycloak-db.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-org_user} -d ${POSTGRES_DB:-org_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ──────────────────────────────────────────────────────────
+  # Zookeeper  (required by Kafka)
+  # ──────────────────────────────────────────────────────────
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.6.1
+    container_name: org-zookeeper
+    restart: unless-stopped
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME:   2000
+    ports:
+      - "2182:2181"
+
+  # ──────────────────────────────────────────────────────────
+  # Kafka
+  #   PLAINTEXT          → localhost:9093  (host machine / Spring Boot app)
+  #   PLAINTEXT_INTERNAL → kafka:29092     (container-to-container)
+  # ──────────────────────────────────────────────────────────
+  kafka:
+    image: confluentinc/cp-kafka:7.6.1
+    container_name: org-kafka
+    restart: unless-stopped
+    depends_on:
+      zookeeper:
+        condition: service_started
+    environment:
+      KAFKA_BROKER_ID:                        1
+      KAFKA_ZOOKEEPER_CONNECT:                zookeeper:2181
+      KAFKA_LISTENERS:                        PLAINTEXT://0.0.0.0:9092,PLAINTEXT_INTERNAL://0.0.0.0:29092
+      KAFKA_ADVERTISED_LISTENERS:             PLAINTEXT://localhost:9093,PLAINTEXT_INTERNAL://kafka:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP:   PLAINTEXT:PLAINTEXT,PLAINTEXT_INTERNAL:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME:       PLAINTEXT_INTERNAL
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE:        "true"
+      KAFKA_LOG_RETENTION_HOURS:              168
+    ports:
+      - "9093:9092"
+    healthcheck:
+      test: ["CMD", "kafka-broker-api-versions", "--bootstrap-server", "localhost:9092"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 20s
+
+  # ──────────────────────────────────────────────────────────
+  # Keycloak  (realm alterx imported at first boot)
+  # ──────────────────────────────────────────────────────────
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.0
+    container_name: org-keycloak
+    restart: unless-stopped
+    command: start-dev --import-realm --health-enabled=true
+    environment:
+      KEYCLOAK_ADMIN:          ${KEYCLOAK_ADMIN_USER:-admin}
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin}
+      KC_DB:          postgres
+      KC_DB_URL:      jdbc:postgresql://postgres:5432/keycloak
+      KC_DB_USERNAME: ${POSTGRES_USER:-org_user}
+      KC_DB_PASSWORD: ${POSTGRES_PASSWORD:-org_pass}
+      KC_HTTP_PORT:       8080
+      KC_HOSTNAME_STRICT: "false"
+      KC_LOG_LEVEL:       INFO
+    ports:
+      - "8081:8080"
+    volumes:
+      - ./docker/keycloak:/opt/keycloak/data/import:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "bash", "-c",
+             "exec 3<>/dev/tcp/localhost/9000 && printf 'GET /health/ready HTTP/1.0\\r\\nHost: localhost:9000\\r\\n\\r\\n' >&3 && cat <&3 | grep -q 'UP'"]
+      interval: 20s
+      timeout: 10s
+      retries: 10
+      start_period: 60s
+
+  # ──────────────────────────────────────────────────────────
+  # Adminer  — lightweight PostgreSQL web UI
+  #   URL      : http://localhost:8889
+  #   System   : PostgreSQL
+  #   Server   : postgres
+  #   Username : org_user  (from .env)
+  #   Password : org_pass  (from .env)
+  #   Database : org_db
+  # ──────────────────────────────────────────────────────────
+  adminer:
+    image: adminer:4.8.1
+    container_name: org-adminer
+    restart: unless-stopped
+    ports:
+      - "8889:8080"
+    environment:
+      ADMINER_DEFAULT_SERVER: postgres
+      ADMINER_DESIGN:         pepa-linha-dark
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # ──────────────────────────────────────────────────────────
+  # Kafka UI  — web interface for Kafka topics and messages
+  #   URL : http://localhost:8091
+  # ──────────────────────────────────────────────────────────
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: org-kafka-ui
+    restart: unless-stopped
+    ports:
+      - "8091:8080"
+    environment:
+      KAFKA_CLUSTERS_0_NAME:             org-service
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092
+      KAFKA_CLUSTERS_0_ZOOKEEPER:        zookeeper:2181
+    depends_on:
+      kafka:
+        condition: service_healthy
+
+# ──────────────────────────────────────────────────────────
+# Named volumes
+# ──────────────────────────────────────────────────────────
+volumes:
+  postgres_data:
+    driver: local

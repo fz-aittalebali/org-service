@@ -1,0 +1,182 @@
+{
+  "id": "alter-x",
+  "realm": "alter-x",
+  "displayName": "Alter-X Platform",
+  "enabled": true,
+  "sslRequired": "external",
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "resetPasswordAllowed": true,
+  "editUsernameAllowed": false,
+  "bruteForceProtected": true,
+  "accessTokenLifespan": 300,
+  "ssoSessionIdleTimeout": 1800,
+  "ssoSessionMaxLifespan": 36000,
+
+  "smtpServer": {
+    "host": "mailhog",
+    "port": "1025",
+    "from": "no-reply@alter-x.local",
+    "fromDisplayName": "Alter-X Platform",
+    "ssl": "false",
+    "starttls": "false",
+    "auth": "false"
+  },
+
+  "roles": {
+    "realm": [
+      {
+        "name": "ADMIN",
+        "description": "Full platform administration — manages users, roles and configuration",
+        "composite": false,
+        "clientRole": false,
+        "containerId": "alter-x"
+      },
+      {
+        "name": "CHANGE_LEAD",
+        "description": "Leads change requests and coordinates delivery",
+        "composite": false,
+        "clientRole": false,
+        "containerId": "alter-x"
+      },
+      {
+        "name": "TEAM_LEAD",
+        "description": "Manages team members and tracks team-level progress",
+        "composite": false,
+        "clientRole": false,
+        "containerId": "alter-x"
+      },
+      {
+        "name": "CHANGE_MANAGER",
+        "description": "Approves and oversees change management processes",
+        "composite": false,
+        "clientRole": false,
+        "containerId": "alter-x"
+      },
+      {
+        "name": "INCIDENT_MANAGER",
+        "description": "Handles and escalates incidents across the platform",
+        "composite": false,
+        "clientRole": false,
+        "containerId": "alter-x"
+      },
+      {
+        "name": "SUPPLIER_MANAGER",
+        "description": "Manages supplier relationships and contracts",
+        "composite": false,
+        "clientRole": false,
+        "containerId": "alter-x"
+      }
+    ]
+  },
+
+  "clients": [
+    {
+      "clientId": "user-service",
+      "name": "User Service",
+      "description": "Alter-X User Service backend — client credentials flow for admin API calls",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "bearerOnly": false,
+      "serviceAccountsEnabled": true,
+      "authorizationServicesEnabled": false,
+      "standardFlowEnabled": false,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "user-service-secret",
+      "fullScopeAllowed": true,
+      "defaultClientScopes": [
+        "web-origins",
+        "profile",
+        "roles",
+        "email"
+      ],
+      "optionalClientScopes": [
+        "address",
+        "phone",
+        "offline_access",
+        "microprofile-jwt"
+      ]
+    },
+    {
+      "clientId": "swagger-ui",
+      "name": "Swagger UI",
+      "description": "Public client for Swagger UI — Authorization Code + PKCE flow for local API testing",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": true,
+      "bearerOnly": false,
+      "serviceAccountsEnabled": false,
+      "authorizationServicesEnabled": false,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "clientAuthenticatorType": "client-secret",
+      "fullScopeAllowed": true,
+      "redirectUris": [
+        "http://localhost:8082/swagger-ui/oauth2-redirect.html"
+      ],
+      "webOrigins": [
+        "http://localhost:8082"
+      ],
+      "attributes": {
+        "pkce.code.challenge.method": "S256"
+      },
+      "defaultClientScopes": [
+        "basic",
+        "web-origins",
+        "profile",
+        "roles",
+        "email"
+      ],
+      "optionalClientScopes": [
+        "address",
+        "phone",
+        "offline_access",
+        "microprofile-jwt"
+      ]
+    }
+  ],
+
+  "users": [
+    {
+      "username": "service-account-user-service",
+      "enabled": true,
+      "email": "service-account-user-service@placeholder.alter-x.local",
+      "serviceAccountClientId": "user-service",
+      "clientRoles": {
+        "realm-management": [
+          "manage-users",
+          "view-users",
+          "query-users",
+          "manage-realm",
+          "view-realm",
+          "query-realms",
+          "view-clients",
+          "query-clients"
+        ]
+      }
+    },
+    {
+      "username": "admin-test",
+      "enabled": true,
+      "email": "admin-test@alter-x.local",
+      "firstName": "Admin",
+      "lastName": "Test",
+      "emailVerified": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "admin123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "ADMIN"
+      ]
+    }
+  ]
+}
