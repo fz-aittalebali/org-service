@@ -28,7 +28,7 @@ public class OpenApiConfig {
 
     private static final String SCHEME_NAME = "keycloak-oauth2";
 
-    @Value("${KEYCLOAK_BASE_URL:http://localhost:8081}")
+    @Value("${KEYCLOAK_BASE_URL:http://localhost:8080}")
     private String keycloakBaseUrl;
 
     @Value("${KEYCLOAK_REALM:alter-x}")

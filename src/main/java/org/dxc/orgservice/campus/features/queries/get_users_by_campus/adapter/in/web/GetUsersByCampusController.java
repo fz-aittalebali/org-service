@@ -1,6 +1,8 @@
 package org.dxc.orgservice.campus.features.queries.get_users_by_campus.adapter.in.web;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -38,6 +40,9 @@ public class GetUsersByCampusController {
     @GetMapping("/{campusId}/users")
     public ResponseEntity<UserPageResponse> getUsersByCampus(
             @PathVariable UUID campusId,
+            @Parameter(description = "Filter by user role",
+                    schema = @Schema(allowableValues = {"ADMIN", "CHANGE_LEAD", "TEAM_LEAD",
+                            "SUPPLIER_MANAGER", "CHANGE_MANAGER", "INCIDENT_MANAGER"}))
             @RequestParam(required = false) String role,
             @RequestParam(defaultValue = "0")  int page,
             @RequestParam(defaultValue = "20") int size) {

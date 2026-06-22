@@ -65,6 +65,11 @@ kafka:
     team-updated: org.team.updated
     team-deleted: org.team.deleted
 
+feign:
+  clients:
+    user-service:
+      url: http://localhost
+
 outbox:
   batch-size: 50
   polling-interval-ms: 5000
