@@ -20,9 +20,9 @@
          Coordinates
          ================================================================ -->
     <groupId>org.dxc</groupId>
-    <artifactId>geo-org-service</artifactId>
+    <artifactId>org-service</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>geo-org-service</name>
+    <name>org-service</name>
     <description>Organizational Hierarchy Service — DDD / CQRS / Hexagonal Architecture</description>
 
     <!-- ================================================================
