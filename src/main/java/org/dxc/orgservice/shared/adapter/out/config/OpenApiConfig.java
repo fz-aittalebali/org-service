@@ -31,7 +31,7 @@ public class OpenApiConfig {
     @Value("${KEYCLOAK_BASE_URL:http://localhost:8081}")
     private String keycloakBaseUrl;
 
-    @Value("${KEYCLOAK_REALM:alterx}")
+    @Value("${KEYCLOAK_REALM:alter-x}")
     private String keycloakRealm;
 
     @Bean
