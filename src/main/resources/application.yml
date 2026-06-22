@@ -79,6 +79,32 @@ outbox:
   batch-size: 50
   polling-interval-ms: 5000
 
+feign:
+  clients:
+    user-service:
+      url: ${USER_SERVICE_URL:http://localhost:8082}
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      user-service_getUsersByTeamIds:
+        sliding-window-size: 10
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 15s
+        permitted-number-of-calls-in-half-open-state: 3
+        automatic-transition-from-open-to-half-open-enabled: true
+  retry:
+    instances:
+      user-service_getUsersByTeamIds:
+        max-attempts: 3
+        wait-duration: 500ms
+  ratelimiter:
+    instances:
+      user-service_getUsersByTeamIds:
+        limit-for-period: 50
+        limit-refresh-period: 1s
+        timeout-duration: 0s
+
 management:
   endpoints:
     web:

@@ -6,6 +6,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -35,4 +37,7 @@ public interface ITeamJpaRepository extends JpaRepository<TeamJpaEntity, UUID> {
             WHERE t.id = :teamId
             """, nativeQuery = true)
     Optional<TeamHierarchyProjection> findHierarchyByTeamId(@Param("teamId") UUID teamId);
+
+    @Query("SELECT t.id FROM TeamJpaEntity t WHERE t.departmentId IN :deptIds")
+    List<UUID> findIdsByDepartmentIdIn(@Param("deptIds") Collection<UUID> deptIds);
 }
