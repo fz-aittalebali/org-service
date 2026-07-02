@@ -42,7 +42,7 @@ public class GetUsersByCampusController {
             @PathVariable UUID campusId,
             @Parameter(description = "Filter by user role",
                     schema = @Schema(allowableValues = {"ADMIN", "CHANGE_LEAD", "TEAM_LEAD",
-                            "SUPPLIER_MANAGER", "CHANGE_MANAGER", "INCIDENT_MANAGER"}))
+                            "OUTSOURCING_MANAGER", "CHANGE_MANAGER", "INCIDENT_MANAGER"}))
             @RequestParam(required = false) String role,
             @RequestParam(defaultValue = "0")  int page,
             @RequestParam(defaultValue = "20") int size) {

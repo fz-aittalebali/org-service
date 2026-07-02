@@ -62,7 +62,7 @@
         "containerId": "alter-x"
       },
       {
-        "name": "SUPPLIER_MANAGER",
+        "name": "OUTSOURCING_MANAGER",
         "description": "Manages supplier relationships and contracts",
         "composite": false,
         "clientRole": false,
